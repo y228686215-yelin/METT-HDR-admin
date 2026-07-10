@@ -1,6 +1,56 @@
 # hdr-api
 
-`hdr-api` will be the future Java backend REST API project for METT HDR.
+`hdr-api` is the Java backend REST API foundation for METT HDR.
+
+## Technical Direction
+
+- Java 21
+- Spring Boot
+- Maven
+- MySQL 8
+- Redis
+- Flyway
+- REST API
+- OpenAPI / Swagger
+- JUnit-based tests
+- Modular monolith first
+
+## Build
+
+```bash
+mvn clean package
+```
+
+## Run Locally
+
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=local
+```
+
+Local configuration uses environment variable placeholders only. Do not commit real credentials.
+
+## Test
+
+```bash
+mvn test
+```
+
+## API Docs
+
+After starting the service locally, open:
+
+```txt
+http://localhost:8080/swagger-ui.html
+```
+
+## Foundation APIs
+
+- `GET /api/v1/health`
+- `GET /api/v1/health/liveness`
+- `GET /api/v1/health/readiness`
+- `GET /api/v1/app/meta`
+- `GET /api/v1/admin/meta`
+- `GET /api/v1/integrations/evaluation/meta`
 
 ## Planned Scope
 
@@ -20,12 +70,4 @@
 
 ## Non-Goals For This PR
 
-This PR does not initialize Spring Boot.
-
-This PR does not implement backend code.
-
-This PR does not create database migrations.
-
-This PR does not implement authentication.
-
-This PR does not implement membership, payment, product, report, file, or lighting logic.
+This PR does not implement user registration, login, admin login, JWT or token business flow, membership plans, quota rules, payment orders, product database business, product matching, file upload, protected file download, report generation, PDF generation, lighting analysis, expert display, tutorial center, real evaluation backend API calls, SSO, account binding, mobile app, mini program, or open API commercialization.

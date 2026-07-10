@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: ${HDR_DB_URL:}
+    username: ${HDR_DB_USER:}
+    password: ${HDR_DB_PASSWORD:}
+  data:
+    redis:
+      host: ${HDR_REDIS_HOST:}
+      port: ${HDR_REDIS_PORT:6379}
+      password: ${HDR_REDIS_PASSWORD:}
+  flyway:
+    enabled: ${HDR_FLYWAY_ENABLED:false}
+
+mett:
+  hdr:
+    integration:
+      evaluation:
+        enabled: ${HDR_EVALUATION_INTEGRATION_ENABLED:false}
