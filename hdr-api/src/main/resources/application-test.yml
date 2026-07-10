@@ -1,0 +1,7 @@
+spring:
+  flyway:
+    enabled: false
+  data:
+    redis:
+      repositories:
+        enabled: false

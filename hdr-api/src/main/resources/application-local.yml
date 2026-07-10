@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:mysql://${HDR_DB_HOST:127.0.0.1}:${HDR_DB_PORT:3306}/${HDR_DB_NAME:mett_hdr}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: ${HDR_DB_USER:mett_hdr}
+    password: ${HDR_DB_PASSWORD:}
+  data:
+    redis:
+      host: ${HDR_REDIS_HOST:127.0.0.1}
+      port: ${HDR_REDIS_PORT:6379}
+      password: ${HDR_REDIS_PASSWORD:}
+  flyway:
+    enabled: ${HDR_FLYWAY_ENABLED:false}
