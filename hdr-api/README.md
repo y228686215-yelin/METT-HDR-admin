@@ -72,6 +72,12 @@ http://localhost:8080/swagger-ui.html
 - `GET /api/v1/app/teams/{globalTeamId}/membership`
 - `GET /api/v1/app/teams/{globalTeamId}/membership/entitlements`
 - `GET /api/v1/app/teams/{globalTeamId}/membership/usage`
+- `GET /api/v1/app/membership-offers`
+- `POST|GET /api/v1/app/orders`
+- `GET /api/v1/app/orders/{globalOrderId}`
+- `POST /api/v1/app/orders/{globalOrderId}/payment-attempts`
+- `POST /api/v1/app/orders/{globalOrderId}/cancel`
+- `POST /api/v1/integrations/payments/{providerCode}/callbacks`
 
 ## Identity And Authentication Foundation
 
@@ -98,3 +104,20 @@ seed commercial quota limits.
 This foundation does not add payment providers, prices, currencies, checkout,
 orders, invoices, renewals, projects, products, files, reports, lighting,
 frontends, or real METT integration.
+
+## Payment And Order Foundation
+
+Versioned membership offers, personal and team purchase orders, persisted
+idempotency, provider-neutral payment attempts, independently authenticated
+callbacks, event deduplication, explicit state transitions, review handling,
+and exactly-once paid membership fulfillment are available as backend
+foundations.
+
+The backend resolves all price, currency, plan, version, and duration values
+from an active offer. Flyway seeds no production price. The included
+`LOCAL_TEST` provider is disabled by default, profile-restricted, and requires
+a runtime-only signing secret.
+
+This foundation does not add a real payment provider, merchant credentials,
+production checkout, frontend payment pages, recurring billing, renewals,
+upgrades, refunds, invoices, tax handling, or payment administration UI.

@@ -25,6 +25,11 @@ mett:
       refresh-token-ttl-seconds: ${HDR_REFRESH_TOKEN_TTL_SECONDS:2592000}
       refresh-cookie:
         secure: ${HDR_REFRESH_COOKIE_SECURE:false}
+    payment:
+      order-expiry-minutes: ${HDR_PAYMENT_ORDER_EXPIRY_MINUTES:30}
+      local-test:
+        enabled: ${HDR_PAYMENT_LOCAL_TEST_ENABLED:false}
+        signing-secret: ${HDR_PAYMENT_LOCAL_TEST_SIGNING_SECRET:}
 
 springdoc:
   swagger-ui:

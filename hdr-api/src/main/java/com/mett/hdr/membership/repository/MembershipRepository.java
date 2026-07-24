@@ -29,6 +29,22 @@ public class MembershipRepository {
             LocalDateTime periodEndAt,
             Long createdByUserId
     ) {
+        return create(
+                subject, planId, status, source, startedAt,
+                periodStartAt, periodEndAt, null, createdByUserId);
+    }
+
+    public Membership create(
+            MembershipSubject subject,
+            Long planId,
+            String status,
+            String source,
+            LocalDateTime startedAt,
+            LocalDateTime periodStartAt,
+            LocalDateTime periodEndAt,
+            LocalDateTime expiresAt,
+            Long createdByUserId
+    ) {
         GeneratedKeyHolder keys = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement statement = connection.prepareStatement("""
@@ -36,8 +52,8 @@ public class MembershipRepository {
                         subject_type, user_id, team_id, membership_plan_id,
                         status, source, current_marker, started_at,
                         current_period_start_at, current_period_end_at,
-                        created_by_user_id
-                    ) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)
+                        expires_at, created_by_user_id
+                    ) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)
                     """, new String[]{"id"});
             statement.setString(1, subject.subjectType());
             setNullableLong(statement, 2, subject.userId());
@@ -48,7 +64,8 @@ public class MembershipRepository {
             statement.setObject(7, startedAt);
             statement.setObject(8, periodStartAt);
             statement.setObject(9, periodEndAt);
-            setNullableLong(statement, 10, createdByUserId);
+            statement.setObject(10, expiresAt);
+            setNullableLong(statement, 11, createdByUserId);
             return statement;
         }, keys);
         return findById(keys.getKey().longValue()).orElseThrow();
