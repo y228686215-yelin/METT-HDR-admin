@@ -25,11 +25,13 @@ import com.mett.hdr.identity.provider.HdrLocalIdentityProvider;
 import com.mett.hdr.identity.provider.UserIdentity;
 import com.mett.hdr.identity.repository.UserProfileRepository;
 import com.mett.hdr.identity.repository.UserRepository;
+import com.mett.hdr.membership.service.MembershipProvisioningService;
 import com.mett.hdr.permission.service.PermissionService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
@@ -43,6 +45,7 @@ public class AuthService {
     private final JwtTokenService jwtTokenService;
     private final RefreshTokenService refreshTokenService;
     private final AuditService auditService;
+    private final MembershipProvisioningService membershipProvisioningService;
 
     public AuthService(
             UserRepository userRepository,
@@ -53,7 +56,8 @@ public class AuthService {
             HdrLocalIdentityProvider hdrLocalIdentityProvider,
             JwtTokenService jwtTokenService,
             RefreshTokenService refreshTokenService,
-            AuditService auditService
+            AuditService auditService,
+            MembershipProvisioningService membershipProvisioningService
     ) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
@@ -64,8 +68,10 @@ public class AuthService {
         this.jwtTokenService = jwtTokenService;
         this.refreshTokenService = refreshTokenService;
         this.auditService = auditService;
+        this.membershipProvisioningService = membershipProvisioningService;
     }
 
+    @Transactional
     public RegisterResponse register(RegisterRequest request, HttpServletRequest servletRequest) {
         if (isBlank(request.email()) && isBlank(request.phone())) {
             throw new BadRequestException("Email or phone is required.");
@@ -88,6 +94,8 @@ public class AuthService {
         userProfileRepository.createDefault(saved.getId(), defaultDisplayName(saved));
         permissionService.assignDefaultUserRole(saved.getId());
         auditService.record(saved.getId(), "REGISTER", "USER", saved.getGlobalUserId(), servletRequest);
+        membershipProvisioningService.provisionDefaultPersonalFreeMembership(
+                saved.getId(), servletRequest);
         return new RegisterResponse(saved.getGlobalUserId(), "REGISTER_SUCCESS");
     }
 
