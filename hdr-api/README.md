@@ -66,6 +66,12 @@ http://localhost:8080/swagger-ui.html
 - `GET|POST /api/v1/app/teams/{globalTeamId}/members`
 - `PATCH|DELETE /api/v1/app/teams/{globalTeamId}/members/{globalUserId}`
 - `POST /api/v1/app/teams/{globalTeamId}/manager-transfer`
+- `GET /api/v1/app/memberships/me`
+- `GET /api/v1/app/memberships/me/entitlements`
+- `GET /api/v1/app/memberships/me/usage`
+- `GET /api/v1/app/teams/{globalTeamId}/membership`
+- `GET /api/v1/app/teams/{globalTeamId}/membership/entitlements`
+- `GET /api/v1/app/teams/{globalTeamId}/membership/usage`
 
 ## Identity And Authentication Foundation
 
@@ -77,4 +83,18 @@ METT identity integration is intentionally boundary-only in this stage. The back
 
 Organizations, contextual organization memberships, standalone and organization-owned teams, team memberships, owner/manager transfer, historical membership states, and reusable personal/team/organization ownership policies are persisted through JDBC. Platform RBAC remains separate from organization and team membership roles.
 
-This foundation does not add subscription plans, quotas, payments, orders, projects, products, files, reports, lighting, frontends, or real METT integration.
+## Membership, Entitlement And Quota Foundation
+
+Versioned Personal Free/Plus/Pro and Team Plus/Pro plan definitions, default
+Personal Free provisioning, boolean and quota entitlement resolution, database
+quota usage, immutable idempotent quota transactions, reservations, membership
+history, and lazy monthly usage-cycle snapshots are available as backend
+foundations.
+
+Only authenticated membership and entitlement read APIs are public. Plan
+activation and quota mutation remain internal services. The migration does not
+seed commercial quota limits.
+
+This foundation does not add payment providers, prices, currencies, checkout,
+orders, invoices, renewals, projects, products, files, reports, lighting,
+frontends, or real METT integration.

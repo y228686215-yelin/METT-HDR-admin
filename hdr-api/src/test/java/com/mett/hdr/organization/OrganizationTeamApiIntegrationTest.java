@@ -15,6 +15,7 @@ import com.mett.hdr.auth.repository.RefreshTokenRepository;
 import com.mett.hdr.identity.repository.UserIdentityLinkRepository;
 import com.mett.hdr.identity.repository.UserProfileRepository;
 import com.mett.hdr.identity.repository.UserRepository;
+import com.mett.hdr.membership.repository.MembershipRepository;
 import com.mett.hdr.organization.repository.OrganizationMemberRepository;
 import com.mett.hdr.organization.repository.OrganizationRepository;
 import com.mett.hdr.permission.repository.PermissionRepository;
@@ -61,11 +62,14 @@ class OrganizationTeamApiIntegrationTest {
     private PermissionRepository permissionRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private MembershipRepository membershipRepository;
 
     @BeforeEach
     void reset() {
         auditLogRepository.clear();
         refreshTokenRepository.clear();
+        membershipRepository.clearAllMembershipData();
         teamMemberRepository.clear();
         teamRepository.clear();
         organizationMemberRepository.clear();

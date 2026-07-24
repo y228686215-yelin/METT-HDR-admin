@@ -15,6 +15,7 @@ import com.mett.hdr.auth.repository.RefreshTokenRepository;
 import com.mett.hdr.identity.repository.UserIdentityLinkRepository;
 import com.mett.hdr.identity.repository.UserProfileRepository;
 import com.mett.hdr.identity.repository.UserRepository;
+import com.mett.hdr.membership.repository.MembershipRepository;
 import com.mett.hdr.permission.repository.PermissionRepository;
 import com.mett.hdr.organization.repository.OrganizationMemberRepository;
 import com.mett.hdr.organization.repository.OrganizationRepository;
@@ -72,10 +73,14 @@ class AuthApiIntegrationTest {
     @Autowired
     private TeamRepository teamRepository;
 
+    @Autowired
+    private MembershipRepository membershipRepository;
+
     @BeforeEach
     void resetStores() {
         auditLogRepository.clear();
         refreshTokenRepository.clear();
+        membershipRepository.clearAllMembershipData();
         teamMemberRepository.clear();
         teamRepository.clear();
         organizationMemberRepository.clear();
@@ -147,6 +152,12 @@ class AuthApiIntegrationTest {
                 .andExpect(status().isUnauthorized());
 
         assertThat(auditLogRepository.countByAction("REGISTER")).isEqualTo(1);
+        assertThat(auditLogRepository.countByAction("MEMBERSHIP_DEFAULT_PROVISION")).isEqualTo(1);
+        assertThat(membershipRepository.findCurrentForUser(
+                userRepository.findByAccount(email).orElseThrow().getId()))
+                .get()
+                .extracting(value -> value.status())
+                .isEqualTo("ACTIVE");
         assertThat(auditLogRepository.countByAction("LOGIN_SUCCESS")).isEqualTo(1);
         assertThat(auditLogRepository.countByAction("TOKEN_REFRESH")).isEqualTo(1);
         assertThat(auditLogRepository.countByAction("LOGOUT")).isEqualTo(1);
