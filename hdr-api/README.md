@@ -78,6 +78,18 @@ http://localhost:8080/swagger-ui.html
 - `POST /api/v1/app/orders/{globalOrderId}/payment-attempts`
 - `POST /api/v1/app/orders/{globalOrderId}/cancel`
 - `POST /api/v1/integrations/payments/{providerCode}/callbacks`
+- `POST|GET /api/v1/app/projects`
+- `GET|PATCH /api/v1/app/projects/{globalProjectId}`
+- `POST /api/v1/app/projects/{globalProjectId}/activate`
+- `POST /api/v1/app/projects/{globalProjectId}/archive`
+- `POST /api/v1/app/projects/{globalProjectId}/restore`
+- `POST /api/v1/app/projects/{globalProjectId}/manager-transfer`
+- `GET|POST /api/v1/app/projects/{globalProjectId}/members`
+- `PATCH|DELETE /api/v1/app/projects/{globalProjectId}/members/{globalUserId}`
+- `GET|POST /api/v1/app/projects/{globalProjectId}/spaces`
+- `GET|PATCH /api/v1/app/projects/{globalProjectId}/spaces/{globalSpaceId}`
+- `POST /api/v1/app/projects/{globalProjectId}/spaces/{globalSpaceId}/archive`
+- `POST /api/v1/app/projects/{globalProjectId}/spaces/{globalSpaceId}/restore`
 
 ## Identity And Authentication Foundation
 
@@ -121,3 +133,15 @@ a runtime-only signing secret.
 This foundation does not add a real payment provider, merchant credentials,
 production checkout, frontend payment pages, recurring billing, renewals,
 upgrades, refunds, invoices, tax handling, or payment administration UI.
+
+## Project And Space Foundation
+
+Personal, team, and organization-owned projects now use the reusable ownership
+policy and membership entitlements. Project roles remain contextual, manager
+transfer preserves exactly one active manager, and archived records remain
+readable without supporting normal mutation.
+
+Hierarchical project spaces support server-derived rectangle area and volume,
+cycle-safe parent movement, and historical archive/restore behavior. Generic
+external project links are available only through an internal service; no
+public integration endpoint or external synchronization is included.

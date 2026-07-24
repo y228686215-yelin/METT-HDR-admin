@@ -584,3 +584,110 @@ CREATE TABLE payment_order_state_transitions (
     FOREIGN KEY (payment_event_id) REFERENCES payment_events (id),
     CHECK (state_type IN ('ORDER', 'PAYMENT', 'FULFILLMENT'))
 );
+
+CREATE TABLE projects (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    global_project_id VARCHAR(64) NOT NULL UNIQUE,
+    project_number VARCHAR(64) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    project_type VARCHAR(64) NOT NULL,
+    description VARCHAR(2000),
+    status VARCHAR(32) NOT NULL,
+    origin_system VARCHAR(64) NOT NULL,
+    city VARCHAR(128),
+    timezone VARCHAR(64),
+    owner_user_id BIGINT NOT NULL,
+    team_id BIGINT,
+    organization_id BIGINT,
+    created_by_user_id BIGINT NOT NULL,
+    managed_by_user_id BIGINT NOT NULL,
+    activated_at TIMESTAMP(3),
+    archived_at TIMESTAMP(3),
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (owner_user_id) REFERENCES users (id),
+    FOREIGN KEY (team_id) REFERENCES teams (id),
+    FOREIGN KEY (organization_id) REFERENCES organizations (id),
+    FOREIGN KEY (created_by_user_id) REFERENCES users (id),
+    FOREIGN KEY (managed_by_user_id) REFERENCES users (id),
+    CHECK (project_type IN ('RESIDENTIAL', 'SMALL_COMMERCIAL', 'OTHER')),
+    CHECK (status IN ('DRAFT', 'ACTIVE', 'ARCHIVED')),
+    CHECK (origin_system = 'HDR')
+);
+
+CREATE TABLE project_members (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    project_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    member_role VARCHAR(32) NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    joined_at TIMESTAMP(3) NOT NULL,
+    left_at TIMESTAMP(3),
+    created_by_user_id BIGINT NOT NULL,
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES projects (id),
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (created_by_user_id) REFERENCES users (id),
+    UNIQUE (project_id, user_id),
+    CHECK (member_role IN ('MANAGER', 'EDITOR', 'VIEWER')),
+    CHECK (status IN ('ACTIVE', 'SUSPENDED', 'LEFT')),
+    CHECK ((status = 'LEFT' AND left_at IS NOT NULL) OR (status <> 'LEFT' AND left_at IS NULL))
+);
+
+CREATE TABLE project_spaces (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    global_space_id VARCHAR(64) NOT NULL UNIQUE,
+    project_id BIGINT NOT NULL,
+    parent_space_id BIGINT,
+    name VARCHAR(255) NOT NULL,
+    space_level_type VARCHAR(32) NOT NULL,
+    usage_code VARCHAR(64),
+    geometry_type VARCHAR(32) NOT NULL,
+    length_m DECIMAL(12,3),
+    width_m DECIMAL(12,3),
+    height_m DECIMAL(12,3),
+    floor_area_m2 DECIMAL(14,3),
+    volume_m3 DECIMAL(16,3),
+    orientation_code VARCHAR(32),
+    status VARCHAR(32) NOT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_by_user_id BIGINT NOT NULL,
+    archived_at TIMESTAMP(3),
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES projects (id),
+    FOREIGN KEY (parent_space_id) REFERENCES project_spaces (id),
+    FOREIGN KEY (created_by_user_id) REFERENCES users (id),
+    CHECK (space_level_type IN ('FLOOR', 'ROOM', 'ZONE')),
+    CHECK (geometry_type IN ('RECTANGLE', 'UNSPECIFIED')),
+    CHECK (status IN ('ACTIVE', 'ARCHIVED')),
+    CHECK (orientation_code IS NULL OR orientation_code IN (
+        'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW', 'INTERNAL', 'UNKNOWN'
+    )),
+    CHECK ((length_m IS NULL OR length_m > 0)
+        AND (width_m IS NULL OR width_m > 0)
+        AND (height_m IS NULL OR height_m > 0)),
+    CHECK (geometry_type <> 'RECTANGLE' OR (length_m IS NOT NULL AND width_m IS NOT NULL)),
+    CHECK ((floor_area_m2 IS NULL OR floor_area_m2 > 0) AND (volume_m3 IS NULL OR volume_m3 > 0))
+);
+
+CREATE TABLE external_object_links (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    local_object_type VARCHAR(64) NOT NULL,
+    local_object_id BIGINT NOT NULL,
+    local_global_id VARCHAR(64) NOT NULL,
+    external_system VARCHAR(64) NOT NULL,
+    external_object_type VARCHAR(64) NOT NULL,
+    external_object_id VARCHAR(128),
+    external_global_id VARCHAR(64),
+    relation_type VARCHAR(32) NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (local_object_type, local_global_id, external_system, external_object_type, relation_type),
+    CHECK (local_object_type = 'PROJECT'),
+    CHECK (external_object_id IS NOT NULL OR external_global_id IS NOT NULL),
+    CHECK (relation_type IN ('SOURCE', 'MIRROR', 'REFERENCE')),
+    CHECK (status IN ('ACTIVE', 'INACTIVE'))
+);

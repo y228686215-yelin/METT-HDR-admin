@@ -58,6 +58,10 @@ public class GlobalIdService {
         return "HDR-" + UUID.randomUUID().toString().replace("-", "").toUpperCase();
     }
 
+    public String projectNumber() {
+        return "HDR-P-" + UUID.randomUUID().toString().replace("-", "").toUpperCase();
+    }
+
     public String jobId() {
         return generate("job_");
     }
