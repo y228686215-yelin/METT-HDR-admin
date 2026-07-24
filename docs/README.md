@@ -11,6 +11,7 @@ This folder is the planning and architecture documentation area for METT HDR.
 - `organization-team-ownership-design.md`
 - `membership-entitlement-quota-design.md`
 - `payment-order-foundation-design.md`
+- `project-space-foundation-design.md`
 - `mett-reuse-boundary.md`
 - `sprint-plan.md`
 - `upstream-mett-admin-handoff/`

@@ -22,6 +22,7 @@ class GlobalIdServiceTest {
         assertThat(globalIdService.fileId()).startsWith("gfile_");
         assertThat(globalIdService.reportId()).startsWith("greport_");
         assertThat(globalIdService.jobId()).startsWith("job_");
+        assertThat(globalIdService.projectNumber()).startsWith("HDR-P-");
     }
 
     @Test
