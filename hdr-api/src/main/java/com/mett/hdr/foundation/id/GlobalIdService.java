@@ -42,6 +42,22 @@ public class GlobalIdService {
         return generate("greport_");
     }
 
+    public String offerId() {
+        return generate("offer_");
+    }
+
+    public String orderId() {
+        return generate("ord_");
+    }
+
+    public String paymentAttemptId() {
+        return generate("pay_");
+    }
+
+    public String orderNumber() {
+        return "HDR-" + UUID.randomUUID().toString().replace("-", "").toUpperCase();
+    }
+
     public String jobId() {
         return generate("job_");
     }

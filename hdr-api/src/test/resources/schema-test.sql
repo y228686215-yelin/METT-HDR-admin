@@ -380,3 +380,207 @@ FROM membership_plans p
 JOIN entitlement_definitions d ON d.code = 'TEAM_WORKSPACE_ACCESS'
 WHERE p.plan_code IN ('TEAM_PLUS', 'TEAM_PRO')
   AND p.version = 1;
+
+CREATE TABLE membership_plan_offers (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    global_offer_id VARCHAR(64) NOT NULL UNIQUE,
+    offer_code VARCHAR(64) NOT NULL,
+    version INT NOT NULL,
+    membership_plan_id BIGINT NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    purchase_mode VARCHAR(32) NOT NULL,
+    currency VARCHAR(3) NOT NULL,
+    amount_minor BIGINT NOT NULL,
+    membership_duration_months INT NOT NULL,
+    valid_from TIMESTAMP(3),
+    valid_until TIMESTAMP(3),
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (offer_code, version),
+    FOREIGN KEY (membership_plan_id) REFERENCES membership_plans (id),
+    CHECK (version > 0),
+    CHECK (status IN ('DRAFT', 'ACTIVE', 'RETIRED')),
+    CHECK (purchase_mode = 'ONE_TIME_TERM'),
+    CHECK (CHAR_LENGTH(currency) = 3 AND currency = UPPER(currency)),
+    CHECK (amount_minor >= 0),
+    CHECK (membership_duration_months > 0),
+    CHECK (
+        valid_from IS NULL OR valid_until IS NULL
+        OR valid_until > valid_from
+    )
+);
+
+CREATE TABLE payment_orders (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    global_order_id VARCHAR(64) NOT NULL UNIQUE,
+    order_number VARCHAR(64) NOT NULL UNIQUE,
+    subject_type VARCHAR(32) NOT NULL,
+    user_id BIGINT,
+    team_id BIGINT,
+    purchaser_user_id BIGINT NOT NULL,
+    order_status VARCHAR(32) NOT NULL,
+    payment_status VARCHAR(32) NOT NULL,
+    fulfillment_status VARCHAR(32) NOT NULL,
+    currency VARCHAR(3) NOT NULL,
+    total_amount_minor BIGINT NOT NULL,
+    request_idempotency_key VARCHAR(128) NOT NULL,
+    expires_at TIMESTAMP(3) NOT NULL,
+    paid_at TIMESTAMP(3),
+    fulfilled_at TIMESTAMP(3),
+    cancelled_at TIMESTAMP(3),
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (purchaser_user_id, request_idempotency_key),
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (team_id) REFERENCES teams (id),
+    FOREIGN KEY (purchaser_user_id) REFERENCES users (id),
+    CHECK (
+        (subject_type = 'USER' AND user_id IS NOT NULL AND team_id IS NULL)
+        OR
+        (subject_type = 'TEAM' AND team_id IS NOT NULL AND user_id IS NULL)
+    ),
+    CHECK (order_status IN (
+        'CREATED', 'PAYMENT_PENDING', 'PAID', 'FULFILLED',
+        'CANCELLED', 'EXPIRED', 'PAYMENT_FAILED',
+        'PAYMENT_REVIEW_REQUIRED'
+    )),
+    CHECK (payment_status IN (
+        'UNPAID', 'PROCESSING', 'PAID', 'FAILED', 'REVIEW_REQUIRED'
+    )),
+    CHECK (fulfillment_status IN (
+        'NOT_STARTED', 'PROCESSING', 'FULFILLED', 'FAILED'
+    )),
+    CHECK (CHAR_LENGTH(currency) = 3 AND currency = UPPER(currency)),
+    CHECK (total_amount_minor >= 0)
+);
+
+CREATE TABLE payment_order_items (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    payment_order_id BIGINT NOT NULL UNIQUE,
+    item_type VARCHAR(32) NOT NULL,
+    membership_plan_offer_id BIGINT NOT NULL,
+    membership_plan_id BIGINT NOT NULL,
+    quantity INT NOT NULL,
+    currency VARCHAR(3) NOT NULL,
+    unit_amount_minor BIGINT NOT NULL,
+    total_amount_minor BIGINT NOT NULL,
+    plan_code_snapshot VARCHAR(64) NOT NULL,
+    plan_version_snapshot INT NOT NULL,
+    tier_snapshot VARCHAR(32) NOT NULL,
+    offer_code_snapshot VARCHAR(64) NOT NULL,
+    offer_version_snapshot INT NOT NULL,
+    membership_duration_months INT NOT NULL,
+    item_snapshot JSON NOT NULL,
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (payment_order_id) REFERENCES payment_orders (id),
+    FOREIGN KEY (membership_plan_offer_id) REFERENCES membership_plan_offers (id),
+    FOREIGN KEY (membership_plan_id) REFERENCES membership_plans (id),
+    CHECK (item_type = 'MEMBERSHIP_PLAN'),
+    CHECK (quantity = 1),
+    CHECK (CHAR_LENGTH(currency) = 3 AND currency = UPPER(currency)),
+    CHECK (
+        unit_amount_minor >= 0
+        AND total_amount_minor = unit_amount_minor * quantity
+    ),
+    CHECK (plan_version_snapshot > 0 AND offer_version_snapshot > 0),
+    CHECK (tier_snapshot IN ('PLUS', 'PRO')),
+    CHECK (membership_duration_months > 0)
+);
+
+CREATE TABLE payment_attempts (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    global_payment_attempt_id VARCHAR(64) NOT NULL UNIQUE,
+    payment_order_id BIGINT NOT NULL,
+    provider_code VARCHAR(64) NOT NULL,
+    provider_attempt_id VARCHAR(128),
+    provider_transaction_id VARCHAR(128),
+    idempotency_key VARCHAR(128) NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    requested_amount_minor BIGINT NOT NULL,
+    requested_currency VARCHAR(3) NOT NULL,
+    next_action_type VARCHAR(32),
+    provider_reference VARCHAR(255),
+    failure_code VARCHAR(64),
+    failure_message VARCHAR(500),
+    expires_at TIMESTAMP(3),
+    succeeded_at TIMESTAMP(3),
+    failed_at TIMESTAMP(3),
+    created_by_user_id BIGINT NOT NULL,
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (payment_order_id, idempotency_key),
+    UNIQUE (provider_code, provider_attempt_id),
+    UNIQUE (provider_code, provider_transaction_id),
+    FOREIGN KEY (payment_order_id) REFERENCES payment_orders (id),
+    FOREIGN KEY (created_by_user_id) REFERENCES users (id),
+    CHECK (status IN (
+        'CREATED', 'ACTION_REQUIRED', 'PROCESSING', 'SUCCEEDED',
+        'FAILED', 'CANCELLED', 'EXPIRED'
+    )),
+    CHECK (requested_amount_minor >= 0),
+    CHECK (
+        CHAR_LENGTH(requested_currency) = 3
+        AND requested_currency = UPPER(requested_currency)
+    )
+);
+
+CREATE TABLE payment_events (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    provider_code VARCHAR(64) NOT NULL,
+    provider_event_id VARCHAR(128) NOT NULL,
+    event_type VARCHAR(64) NOT NULL,
+    payload_digest VARCHAR(128) NOT NULL,
+    processing_status VARCHAR(32) NOT NULL,
+    payment_order_id BIGINT,
+    payment_attempt_id BIGINT,
+    provider_transaction_id VARCHAR(128),
+    sanitized_event_data JSON,
+    error_code VARCHAR(64),
+    error_message VARCHAR(500),
+    received_at TIMESTAMP(3) NOT NULL,
+    processed_at TIMESTAMP(3),
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (provider_code, provider_event_id),
+    FOREIGN KEY (payment_order_id) REFERENCES payment_orders (id),
+    FOREIGN KEY (payment_attempt_id) REFERENCES payment_attempts (id),
+    CHECK (processing_status IN (
+        'RECEIVED', 'PROCESSED', 'IGNORED', 'FAILED', 'REVIEW_REQUIRED'
+    ))
+);
+
+CREATE TABLE payment_order_fulfillments (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    payment_order_id BIGINT NOT NULL UNIQUE,
+    fulfillment_type VARCHAR(32) NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    operation_key VARCHAR(128) NOT NULL UNIQUE,
+    attempt_count INT NOT NULL DEFAULT 0,
+    fulfilled_membership_id BIGINT,
+    last_error_code VARCHAR(64),
+    last_error_message VARCHAR(500),
+    started_at TIMESTAMP(3),
+    completed_at TIMESTAMP(3),
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (payment_order_id) REFERENCES payment_orders (id),
+    FOREIGN KEY (fulfilled_membership_id) REFERENCES memberships (id),
+    CHECK (fulfillment_type = 'MEMBERSHIP_ACTIVATION'),
+    CHECK (status IN ('PENDING', 'PROCESSING', 'FULFILLED', 'FAILED')),
+    CHECK (attempt_count >= 0)
+);
+
+CREATE TABLE payment_order_state_transitions (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    payment_order_id BIGINT NOT NULL,
+    state_type VARCHAR(32) NOT NULL,
+    from_state VARCHAR(32),
+    to_state VARCHAR(32) NOT NULL,
+    reason VARCHAR(500),
+    actor_user_id BIGINT,
+    payment_event_id BIGINT,
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (payment_order_id) REFERENCES payment_orders (id),
+    FOREIGN KEY (actor_user_id) REFERENCES users (id),
+    FOREIGN KEY (payment_event_id) REFERENCES payment_events (id),
+    CHECK (state_type IN ('ORDER', 'PAYMENT', 'FULFILLMENT'))
+);

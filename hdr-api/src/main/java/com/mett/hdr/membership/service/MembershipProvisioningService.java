@@ -64,7 +64,7 @@ public class MembershipProvisioningService {
                         "Default personal membership plan is unavailable."));
         Membership membership;
         try {
-            membership = createCurrent(subject, plan, "SYSTEM_DEFAULT", null);
+            membership = createCurrent(subject, plan, "SYSTEM_DEFAULT", null, 1);
         } catch (ConflictException ex) {
             membership = membershipRepository.findCurrent(subject).orElseThrow(() -> ex);
         }
@@ -95,6 +95,7 @@ public class MembershipProvisioningService {
                 version,
                 source,
                 actorUserId,
+                1,
                 request
         );
     }
@@ -116,6 +117,51 @@ public class MembershipProvisioningService {
                 version,
                 source,
                 actorUserId,
+                1,
+                request
+        );
+    }
+
+    @Transactional
+    public Membership activatePurchasedUserPlan(
+            Long userId,
+            String planCode,
+            int version,
+            int durationMonths,
+            Long actorUserId,
+            HttpServletRequest request
+    ) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found."));
+        return activate(
+                MembershipSubject.user(userId),
+                planCode,
+                version,
+                "PAYMENT",
+                actorUserId,
+                requireDuration(durationMonths),
+                request
+        );
+    }
+
+    @Transactional
+    public Membership activatePurchasedTeamPlan(
+            Long teamId,
+            String planCode,
+            int version,
+            int durationMonths,
+            Long actorUserId,
+            HttpServletRequest request
+    ) {
+        teamRepository.findById(teamId)
+                .orElseThrow(() -> new NotFoundException("Team not found."));
+        return activate(
+                MembershipSubject.team(teamId),
+                planCode,
+                version,
+                "PAYMENT",
+                actorUserId,
+                requireDuration(durationMonths),
                 request
         );
     }
@@ -129,6 +175,19 @@ public class MembershipProvisioningService {
             Long actorUserId,
             HttpServletRequest request
     ) {
+        return replaceCurrentMembership(
+                subject, planCode, version, source, actorUserId, 1, request);
+    }
+
+    private Membership replaceCurrentMembership(
+            MembershipSubject subject,
+            String planCode,
+            int version,
+            String source,
+            Long actorUserId,
+            int durationMonths,
+            HttpServletRequest request
+    ) {
         Membership current = membershipRepository.lockCurrent(subject)
                 .orElseThrow(() -> new NotFoundException("Current membership not found."));
         MembershipPlan plan = requirePlan(planCode, version, subject);
@@ -137,7 +196,8 @@ public class MembershipProvisioningService {
         }
         usageCycleService.snapshotBeforeReplacement(current);
         membershipRepository.replace(current.id(), now());
-        Membership replacement = createCurrent(subject, plan, requireSource(source), actorUserId);
+        Membership replacement = createCurrent(
+                subject, plan, requireSource(source), actorUserId, durationMonths);
         auditService.record(
                 actorUserId,
                 "MEMBERSHIP_PLAN_REPLACE",
@@ -202,15 +262,17 @@ public class MembershipProvisioningService {
             int version,
             String source,
             Long actorUserId,
+            int durationMonths,
             HttpServletRequest request
     ) {
         if (membershipRepository.lockCurrent(subject).isPresent()) {
             return replaceCurrentMembership(
-                    subject, planCode, version, source, actorUserId, request);
+                    subject, planCode, version, source, actorUserId,
+                    durationMonths, request);
         }
         MembershipPlan plan = requirePlan(planCode, version, subject);
         Membership membership = createCurrent(
-                subject, plan, requireSource(source), actorUserId);
+                subject, plan, requireSource(source), actorUserId, durationMonths);
         auditService.record(
                 actorUserId,
                 "MEMBERSHIP_PLAN_ACTIVATE",
@@ -225,7 +287,8 @@ public class MembershipProvisioningService {
             MembershipSubject subject,
             MembershipPlan plan,
             String source,
-            Long actorUserId
+            Long actorUserId,
+            int durationMonths
     ) {
         validateAudience(plan, subject);
         LocalDateTime start = now();
@@ -238,6 +301,9 @@ public class MembershipProvisioningService {
                     start,
                     start,
                     start.plusMonths(1),
+                    "PAYMENT".equals(source)
+                            ? start.plusMonths(requireDuration(durationMonths))
+                            : null,
                     actorUserId
             );
             usageCycleService.initializeUsageRows(membership);
@@ -275,6 +341,13 @@ public class MembershipProvisioningService {
             throw new ConflictException("Invalid membership source.");
         }
         return normalized;
+    }
+
+    private int requireDuration(int durationMonths) {
+        if (durationMonths <= 0) {
+            throw new ConflictException("Membership duration must be positive.");
+        }
+        return durationMonths;
     }
 
     private String subjectResourceId(MembershipSubject subject) {
