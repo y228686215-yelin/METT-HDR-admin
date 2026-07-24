@@ -51,6 +51,17 @@ http://localhost:8080/swagger-ui.html
 - `GET /api/v1/app/meta`
 - `GET /api/v1/admin/meta`
 - `GET /api/v1/integrations/evaluation/meta`
+- `POST /api/v1/app/auth/register`
+- `POST /api/v1/app/auth/login`
+- `POST /api/v1/app/auth/refresh`
+- `POST /api/v1/app/auth/logout`
+- `GET /api/v1/app/users/me`
+
+## Identity And Authentication Foundation
+
+This backend now includes HDR-local identity, password hashing with BCrypt, JWT access token issuing, HttpOnly refresh token lifecycle support, RBAC seed structures, external identity binding abstractions, and audit log foundations.
+
+METT identity integration is intentionally boundary-only in this stage. The backend does not call `mett-admin`, share METT Admin sessions, read METT Admin user tables, or synchronize real METT users.
 
 ## Planned Scope
 

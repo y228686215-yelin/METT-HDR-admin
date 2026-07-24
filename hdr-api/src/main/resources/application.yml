@@ -18,6 +18,13 @@ mett:
     integration:
       evaluation:
         enabled: false
+    auth:
+      jwt:
+        signing-secret: ${HDR_JWT_SIGNING_SECRET:local-development-signing-key-change-me}
+        access-token-ttl-seconds: ${HDR_ACCESS_TOKEN_TTL_SECONDS:3600}
+      refresh-token-ttl-seconds: ${HDR_REFRESH_TOKEN_TTL_SECONDS:2592000}
+      refresh-cookie:
+        secure: ${HDR_REFRESH_COOKIE_SECURE:false}
 
 springdoc:
   swagger-ui:
