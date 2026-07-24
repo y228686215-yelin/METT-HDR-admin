@@ -16,6 +16,10 @@ import com.mett.hdr.identity.repository.UserIdentityLinkRepository;
 import com.mett.hdr.identity.repository.UserProfileRepository;
 import com.mett.hdr.identity.repository.UserRepository;
 import com.mett.hdr.permission.repository.PermissionRepository;
+import com.mett.hdr.organization.repository.OrganizationMemberRepository;
+import com.mett.hdr.organization.repository.OrganizationRepository;
+import com.mett.hdr.team.repository.TeamMemberRepository;
+import com.mett.hdr.team.repository.TeamRepository;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,10 +60,26 @@ class AuthApiIntegrationTest {
     @Autowired
     private PermissionRepository permissionRepository;
 
+    @Autowired
+    private OrganizationMemberRepository organizationMemberRepository;
+
+    @Autowired
+    private OrganizationRepository organizationRepository;
+
+    @Autowired
+    private TeamMemberRepository teamMemberRepository;
+
+    @Autowired
+    private TeamRepository teamRepository;
+
     @BeforeEach
     void resetStores() {
         auditLogRepository.clear();
         refreshTokenRepository.clear();
+        teamMemberRepository.clear();
+        teamRepository.clear();
+        organizationMemberRepository.clear();
+        organizationRepository.clear();
         userIdentityLinkRepository.clear();
         userProfileRepository.clear();
         permissionRepository.clearAssignments();

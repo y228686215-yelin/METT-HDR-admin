@@ -56,6 +56,16 @@ http://localhost:8080/swagger-ui.html
 - `POST /api/v1/app/auth/refresh`
 - `POST /api/v1/app/auth/logout`
 - `GET /api/v1/app/users/me`
+- `POST|GET /api/v1/app/organizations`
+- `GET|PATCH /api/v1/app/organizations/{globalOrganizationId}`
+- `GET|POST /api/v1/app/organizations/{globalOrganizationId}/members`
+- `PATCH|DELETE /api/v1/app/organizations/{globalOrganizationId}/members/{globalUserId}`
+- `POST /api/v1/app/organizations/{globalOrganizationId}/ownership-transfer`
+- `POST|GET /api/v1/app/teams`
+- `GET|PATCH /api/v1/app/teams/{globalTeamId}`
+- `GET|POST /api/v1/app/teams/{globalTeamId}/members`
+- `PATCH|DELETE /api/v1/app/teams/{globalTeamId}/members/{globalUserId}`
+- `POST /api/v1/app/teams/{globalTeamId}/manager-transfer`
 
 ## Identity And Authentication Foundation
 
@@ -63,22 +73,8 @@ This backend now includes HDR-local identity, password hashing with BCrypt, JWT 
 
 METT identity integration is intentionally boundary-only in this stage. The backend does not call `mett-admin`, share METT Admin sessions, read METT Admin user tables, or synchronize real METT users.
 
-## Planned Scope
+## Organization, Team And Ownership Foundation
 
-- User and authentication
-- Team and organization
-- Membership and quota
-- Payment and orders
-- Project and space
-- File and report
-- Product health performance database
-- Product parameter templates
-- Rules and matching
-- Experts and tutorials
-- Integration APIs
-- Audit and jobs
-- Lighting module MVP
+Organizations, contextual organization memberships, standalone and organization-owned teams, team memberships, owner/manager transfer, historical membership states, and reusable personal/team/organization ownership policies are persisted through JDBC. Platform RBAC remains separate from organization and team membership roles.
 
-## Non-Goals For This PR
-
-This PR does not implement user registration, login, admin login, JWT or token business flow, membership plans, quota rules, payment orders, product database business, product matching, file upload, protected file download, report generation, PDF generation, lighting analysis, expert display, tutorial center, real evaluation backend API calls, SSO, account binding, mobile app, mini program, or open API commercialization.
+This foundation does not add subscription plans, quotas, payments, orders, projects, products, files, reports, lighting, frontends, or real METT integration.

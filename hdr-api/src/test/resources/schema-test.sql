@@ -94,6 +94,76 @@ CREATE TABLE audit_logs (
     created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE organizations (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    global_organization_id VARCHAR(64) NOT NULL UNIQUE,
+    global_company_id VARCHAR(64) UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    organization_type VARCHAR(64) NOT NULL,
+    description VARCHAR(1000),
+    status VARCHAR(32) NOT NULL,
+    owner_user_id BIGINT NOT NULL,
+    managed_by_user_id BIGINT NOT NULL,
+    created_by_user_id BIGINT NOT NULL,
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (owner_user_id) REFERENCES users (id),
+    FOREIGN KEY (managed_by_user_id) REFERENCES users (id),
+    FOREIGN KEY (created_by_user_id) REFERENCES users (id)
+);
+
+CREATE TABLE organization_members (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    organization_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    member_role VARCHAR(32) NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    joined_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    left_at TIMESTAMP(3),
+    created_by_user_id BIGINT NOT NULL,
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (organization_id, user_id),
+    FOREIGN KEY (organization_id) REFERENCES organizations (id),
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (created_by_user_id) REFERENCES users (id)
+);
+
+CREATE TABLE teams (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    global_team_id VARCHAR(64) NOT NULL UNIQUE,
+    organization_id BIGINT,
+    name VARCHAR(255) NOT NULL,
+    description VARCHAR(1000),
+    status VARCHAR(32) NOT NULL,
+    owner_user_id BIGINT NOT NULL,
+    managed_by_user_id BIGINT NOT NULL,
+    created_by_user_id BIGINT NOT NULL,
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (organization_id) REFERENCES organizations (id),
+    FOREIGN KEY (owner_user_id) REFERENCES users (id),
+    FOREIGN KEY (managed_by_user_id) REFERENCES users (id),
+    FOREIGN KEY (created_by_user_id) REFERENCES users (id)
+);
+
+CREATE TABLE team_members (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    team_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    member_role VARCHAR(32) NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    joined_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    left_at TIMESTAMP(3),
+    created_by_user_id BIGINT NOT NULL,
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (team_id, user_id),
+    FOREIGN KEY (team_id) REFERENCES teams (id),
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (created_by_user_id) REFERENCES users (id)
+);
+
 INSERT INTO roles (code, name, description) VALUES
 ('USER', 'User', 'Default HDR user role.'),
 ('ADMIN', 'Admin', 'Reserved HDR admin role; not METT Admin.');
